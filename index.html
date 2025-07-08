@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Puzzle Master</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4A49C4'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        .pulse-correct {
+            animation: pulseCorrect 0.6s ease-out;
+        }
+        
+        @keyframes pulseCorrect {
+            0% { background-color: #10B981; transform: scale(1); }
+            50% { background-color: #059669; transform: scale(1.05); }
+            100% { background-color: #10B981; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 dark:text-white mb-2">
+                🧮 Math Puzzle Master
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300 text-lg">
+                Challenge your mind with mathematical puzzles!
+            </p>
+        </header>
+
+        <!-- Game Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-primary" id="score">0</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Score</div>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-green-600" id="correct">0</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Correct</div>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-red-600" id="wrong">0</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Wrong</div>
+            </div>
+            <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 text-center">
+                <div class="text-2xl font-bold text-blue-600" id="timer">30</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Time</div>
+            </div>
+        </div>
+
+        <!-- Level Selection -->
+        <div class="mb-6" id="levelSelection">
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4 text-center">Choose Your Level</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="startGame('easy')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 transform hover:scale-105">
+                    <div class="text-xl mb-2">🟢 Easy</div>
+                    <div class="text-sm">Numbers 1-10</div>
+                    <div class="text-xs opacity-80">+, -, simple ×</div>
+                </button>
+                <button onclick="startGame('medium')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 transform hover:scale-105">
+                    <div class="text-xl mb-2">🟡 Medium</div>
+                    <div class="text-sm">Numbers 1-25</div>
+                    <div class="text-xs opacity-80">+, -, ×, ÷</div>
+                </button>
+                <button onclick="startGame('hard')" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg transition-colors duration-300 transform hover:scale-105">
+                    <div class="text-xl mb-2">🔴 Hard</div>
+                    <div class="text-sm">Numbers 1-50</div>
+                    <div class="text-xs opacity-80">All operations + fractions</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="hidden" id="gameArea">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 mb-6 text-center">
+                <div class="text-4xl md:text-6xl font-bold text-gray-800 dark:text-white mb-6" id="question">
+                    2 + 3 = ?
+                </div>
+                
+                <div class="mb-6">
+                    <input type="number" id="answerInput" 
+                           class="text-2xl md:text-3xl text-center font-bold border-2 border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 w-40 bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:border-primary focus:outline-none transition-colors duration-300"
+                           placeholder="?" autocomplete="off">
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-4 justify-center">
+                    <button onclick="submitAnswer()" 
+                            class="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 transform hover:scale-105">
+                        Submit Answer
+                    </button>
+                    <button onclick="skipQuestion()" 
+                            class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">
+                        Skip Question
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multiple Choice (for some questions) -->
+            <div class="hidden" id="multipleChoice">
+                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4 text-center">Choose the correct answer:</h3>
+                <div class="grid grid-cols-2 gap-4" id="choices">
+                    <!-- Choices will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Game Controls -->
+            <div class="flex flex-col md:flex-row gap-4 justify-center">
+                <button onclick="pauseGame()" id="pauseBtn"
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300">
+                    ⏸️ Pause
+                </button>
+                <button onclick="endGame()" 
+                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300">
+                    🏁 End Game
+                </button>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="hidden" id="results">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 text-center">
+                <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">🎉 Game Over!</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <div class="text-4xl font-bold text-primary" id="finalScore">0</div>
+                        <div class="text-gray-600 dark:text-gray-400">Final Score</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-green-600" id="accuracy">0%</div>
+                        <div class="text-gray-600 dark:text-gray-400">Accuracy</div>
+                    </div>
+                    <div>
+                        <div class="text-4xl font-bold text-blue-600" id="level">Easy</div>
+                        <div class="text-gray-600 dark:text-gray-400">Level</div>
+                    </div>
+                </div>
+                <div class="text-xl text-gray-700 dark:text-gray-300 mb-6" id="performance">
+                    Great job! Keep practicing to improve!
+                </div>
+                <button onclick="resetGame()" 
+                        class="bg-primary hover:bg-primary-dark text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300 transform hover:scale-105">
+                    🔄 Play Again
+                </button>
+            </div>
+        </div>
+
+        <!-- Feedback Message -->
+        <div class="fixed top-4 right-4 hidden" id="feedback">
+            <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+                ✅ Correct!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Game state
+        let gameState = {
+            score: 0,
+            correct: 0,
+            wrong: 0,
+            timeLeft: 30,
+            currentLevel: 'easy',
+            currentQuestion: null,
+            correctAnswer: null,
+            gameTimer: null,
+            isPaused: false,
+            questionsAnswered: 0
+        };
+
+        // Question generators for different levels
+        const questionGenerators = {
+            easy: () => {
+                const operations = ['+', '-', '×'];
+                const op = operations[Math.floor(Math.random() * operations.length)];
+                let a, b, answer;
+                
+                switch(op) {
+                    case '+':
+                        a = Math.floor(Math.random() * 10) + 1;
+                        b = Math.floor(Math.random() * 10) + 1;
+                        answer = a + b;
+                        break;
+                    case '-':
+                        a = Math.floor(Math.random() * 10) + 5;
+                        b = Math.floor(Math.random() * a) + 1;
+                        answer = a - b;
+                        break;
+                    case '×':
+                        a = Math.floor(Math.random() * 5) + 1;
+                        b = Math.floor(Math.random() * 5) + 1;
+                        answer = a * b;
+                        break;
+                }
+                
+                return {
+                    question: `${a} ${op} ${b} = ?`,
+                    answer: answer
+                };
+            },
+            
+            medium: () => {
+                const operations = ['+', '-', '×', '÷'];
+                const op = operations[Math.floor(Math.random() * operations.length)];
+                let a, b, answer;
+                
+                switch(op) {
+                    case '+':
+                        a = Math.floor(Math.random() * 25) + 1;
+                        b = Math.floor(Math.random() * 25) + 1;
+                        answer = a + b;
+                        break;
+                    case '-':
+                        a = Math.floor(Math.random() * 25) + 10;
+                        b = Math.floor(Math.random() * a) + 1;
+                        answer = a - b;
+                        break;
+                    case '×':
+                        a = Math.floor(Math.random() * 12) + 1;
+                        b = Math.floor(Math.random() * 12) + 1;
+                        answer = a * b;
+                        break;
+                    case '÷':
+                        answer = Math.floor(Math.random() * 15) + 1;
+                        b = Math.floor(Math.random() * 10) + 1;
+                        a = answer * b;
+                        break;
+                }
+                
+                return {
+                    question: `${a} ${op} ${b} = ?`,
+                    answer: answer
+                };
+            },
+            
+            hard: () => {
+                const questionTypes = ['arithmetic', 'fraction', 'algebra'];
+                const type = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+                
+                if (type === 'fraction') {
+                    const num1 = Math.floor(Math.random() * 9) + 1;
+                    const den1 = Math.floor(Math.random() * 9) + 1;
+                    const num2 = Math.floor(Math.random() * 9) + 1;
+                    const den2 = Math.floor(Math.random() * 9) + 1;
+                    
+                    // Simple fraction addition
+                    const lcm = den1 * den2; // Simple approach
+                    const newNum1 = num1 * den2;
+                    const newNum2 = num2 * den1;
+                    const resultNum = newNum1 + newNum2;
+                    
+                    // Simplify if possible
+                    const gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+                    const divisor = gcd(resultNum, lcm);
+                    const finalNum = resultNum / divisor;
+                    const finalDen = lcm / divisor;
+                    
+                    return {
+                        question: `${num1}/${den1} + ${num2}/${den2} = ?`,
+                        answer: finalDen === 1 ? finalNum : `${finalNum}/${finalDen}`,
+                        isMultipleChoice: true
+                    };
+                } else if (type === 'algebra') {
+                    const x = Math.floor(Math.random() * 10) + 1;
+                    const a = Math.floor(Math.random() * 10) + 1;
+                    const b = Math.floor(Math.random() * 20) + 1;
+                    const result = a * x + b;
+                    
+                    return {
+                        question: `If ${a}x + ${b} = ${result}, what is x?`,
+                        answer: x
+                    };
+                } else {
+                    // Complex arithmetic
+                    const operations = ['+', '-', '×', '÷'];
+                    const op = operations[Math.floor(Math.random() * operations.length)];
+                    let a, b, answer;
+                    
+                    switch(op) {
+                        case '+':
+                            a = Math.floor(Math.random() * 50) + 10;
+                            b = Math.floor(Math.random() * 50) + 10;
+                            answer = a + b;
+                            break;
+                        case '-':
+                            a = Math.floor(Math.random() * 50) + 25;
+                            b = Math.floor(Math.random() * a) + 1;
+                            answer = a - b;
+                            break;
+                        case '×':
+                            a = Math.floor(Math.random() * 20) + 1;
+                            b = Math.floor(Math.random() * 20) + 1;
+                            answer = a * b;
+                            break;
+                        case '÷':
+                            answer = Math.floor(Math.random() * 25) + 1;
+                            b = Math.floor(Math.random() * 15) + 1;
+                            a = answer * b;
+                            break;
+                    }
+                    
+                    return {
+                        question: `${a} ${op} ${b} = ?`,
+                        answer: answer
+                    };
+                }
+            }
+        };
+
+        function startGame(level) {
+            gameState.currentLevel = level;
+            gameState.score = 0;
+            gameState.correct = 0;
+            gameState.wrong = 0;
+            gameState.questionsAnswered = 0;
+            gameState.timeLeft = level === 'easy' ? 45 : level === 'medium' ? 60 : 90;
+            
+            document.getElementById('levelSelection').classList.add('hidden');
+            document.getElementById('gameArea').classList.remove('hidden');
+            document.getElementById('results').classList.add('hidden');
+            
+            updateDisplay();
+            generateQuestion();
+            startTimer();
+        }
+
+        function generateQuestion() {
+            const questionData = questionGenerators[gameState.currentLevel]();
+            gameState.currentQuestion = questionData.question;
+            gameState.correctAnswer = questionData.answer;
+            
+            document.getElementById('question').textContent = questionData.question;
+            document.getElementById('answerInput').value = '';
+            document.getElementById('answerInput').focus();
+            
+            // Handle multiple choice questions
+            if (questionData.isMultipleChoice) {
+                setupMultipleChoice();
+            } else {
+                document.getElementById('multipleChoice').classList.add('hidden');
+            }
+        }
+
+        function setupMultipleChoice() {
+            const choices = [];
+            const correctAnswer = gameState.correctAnswer;
+            choices.push(correctAnswer);
+            
+            // Generate wrong answers
+            for (let i = 0; i < 3; i++) {
+                let wrongAnswer;
+                if (typeof correctAnswer === 'string' && correctAnswer.includes('/')) {
+                    // Fraction wrong answers
+                    const parts = correctAnswer.split('/');
+                    const num = parseInt(parts[0]);
+                    const den = parseInt(parts[1]);
+                    wrongAnswer = `${num + Math.floor(Math.random() * 3) + 1}/${den + Math.floor(Math.random() * 2)}`;
+                } else {
+                    wrongAnswer = correctAnswer + Math.floor(Math.random() * 10) - 5;
+                    if (wrongAnswer <= 0) wrongAnswer = Math.abs(wrongAnswer) + 1;
+                }
+                if (!choices.includes(wrongAnswer)) {
+                    choices.push(wrongAnswer);
+                }
+            }
+            
+            // Shuffle choices
+            choices.sort(() => Math.random() - 0.5);
+            
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+            
+            choices.forEach(choice => {
+                const button = document.createElement('button');
+                button.textContent = choice;
+                button.className = 'bg-gray-200 dark:bg-gray-700 hover:bg-primary hover:text-white text-gray-800 dark:text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300';
+                button.onclick = () => checkMultipleChoice(choice);
+                choicesContainer.appendChild(button);
+            });
+            
+            document.getElementById('multipleChoice').classList.remove('hidden');
+            document.getElementById('answerInput').style.display = 'none';
+        }
+
+        function checkMultipleChoice(selectedAnswer) {
+            document.getElementById('answerInput').style.display = 'block';
+            document.getElementById('multipleChoice').classList.add('hidden');
+            
+            const isCorrect = selectedAnswer == gameState.correctAnswer;
+            processAnswer(isCorrect);
+        }
+
+        function submitAnswer() {
+            const userAnswer = parseFloat(document.getElementById('answerInput').value);
+            if (isNaN(userAnswer)) {
+                showFeedback('Please enter a valid number!', false);
+                return;
+            }
+            
+            const isCorrect = Math.abs(userAnswer - gameState.correctAnswer) < 0.01;
+            processAnswer(isCorrect);
+        }
+
+        function processAnswer(isCorrect) {
+            gameState.questionsAnswered++;
+            
+            if (isCorrect) {
+                gameState.correct++;
+                gameState.score += gameState.currentLevel === 'easy' ? 10 : 
+                                  gameState.currentLevel === 'medium' ? 20 : 30;
+                showFeedback('Correct! 🎉', true);
+                document.getElementById('question').classList.add('pulse-correct');
+            } else {
+                gameState.wrong++;
+                showFeedback(`Wrong! The answer was ${gameState.correctAnswer}`, false);
+                document.getElementById('question').classList.add('shake');
+            }
+            
+            updateDisplay();
+            
+            setTimeout(() => {
+                document.getElementById('question').classList.remove('pulse-correct', 'shake');
+                if (gameState.timeLeft > 0 && !gameState.isPaused) {
+                    generateQuestion();
+                }
+            }, 1500);
+        }
+
+        function skipQuestion() {
+            gameState.questionsAnswered++;
+            showFeedback(`Skipped! The answer was ${gameState.correctAnswer}`, false);
+            setTimeout(() => {
+                if (gameState.timeLeft > 0) {
+                    generateQuestion();
+                }
+            }, 1000);
+        }
+
+        function showFeedback(message, isCorrect) {
+            const feedback = document.getElementById('feedback');
+            const feedbackDiv = feedback.querySelector('div');
+            
+            feedbackDiv.textContent = message;
+            feedbackDiv.className = `px-6 py-3 rounded-lg shadow-lg ${
+                isCorrect ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            
+            feedback.classList.remove('hidden');
+            feedback.classList.add('bounce-in');
+            
+            setTimeout(() => {
+                feedback.classList.add('hidden');
+                feedback.classList.remove('bounce-in');
+            }, 2000);
+        }
+
+        function startTimer() {
+            gameState.gameTimer = setInterval(() => {
+                if (!gameState.isPaused) {
+                    gameState.timeLeft--;
+                    updateDisplay();
+                    
+                    if (gameState.timeLeft <= 0) {
+                        endGame();
+                    }
+                }
+            }, 1000);
+        }
+
+        function pauseGame() {
+            gameState.isPaused = !gameState.isPaused;
+            const pauseBtn = document.getElementById('pauseBtn');
+            pauseBtn.textContent = gameState.isPaused ? '▶️ Resume' : '⏸️ Pause';
+        }
+
+        function endGame() {
+            clearInterval(gameState.gameTimer);
+            
+            document.getElementById('gameArea').classList.add('hidden');
+            document.getElementById('results').classList.remove('hidden');
+            
+            const accuracy = gameState.questionsAnswered > 0 ? 
+                Math.round((gameState.correct / gameState.questionsAnswered) * 100) : 0;
+            
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            document.getElementById('level').textContent = gameState.currentLevel.charAt(0).toUpperCase() + gameState.currentLevel.slice(1);
+            
+            let performanceMessage;
+            if (accuracy >= 90) performanceMessage = "🌟 Outstanding! You're a math genius!";
+            else if (accuracy >= 75) performanceMessage = "🎯 Excellent work! Keep it up!";
+            else if (accuracy >= 60) performanceMessage = "👍 Good job! Practice makes perfect!";
+            else performanceMessage = "💪 Keep practicing! You'll improve!";
+            
+            document.getElementById('performance').textContent = performanceMessage;
+        }
+
+        function resetGame() {
+            gameState.isPaused = false;
+            document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('levelSelection').classList.remove('hidden');
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('correct').textContent = gameState.correct;
+            document.getElementById('wrong').textContent = gameState.wrong;
+            document.getElementById('timer').textContent = gameState.timeLeft;
+        }
+
+        // Allow Enter key to submit answer
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !document.getElementById('gameArea').classList.contains('hidden')) {
+                submitAnswer();
+            }
+        });
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
